@@ -1,5 +1,4 @@
 import { chromium } from 'playwright';
-import chromiumBinary from '@sparticuz/chromium';
 
 export async function createBrowser() {
   const isProduction = process.env.VERCEL_ENV === 'production';
@@ -12,18 +11,34 @@ export async function createBrowser() {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--disable-web-security',
-      '--disable-features=VizDisplayCompositor'
+      '--disable-features=VizDisplayCompositor',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding'
     ]
   };
 
   if (isProduction) {
-    // 在 Vercel 生产环境使用 @sparticuz/chromium
-    launchOptions.executablePath = await chromiumBinary.executablePath();
-    launchOptions.args = [
-      ...chromiumBinary.args,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-    ];
+    // 在 Vercel 生产环境使用远程 Chromium 二进制文件
+    try {
+      const chromiumBinary = await import('@sparticuz/chromium');
+      // 使用远程 Chromium 二进制文件
+      const remoteChromiumUrl = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar';
+      launchOptions.executablePath = await chromiumBinary.default.executablePath(remoteChromiumUrl);
+      launchOptions.args = [
+        ...chromiumBinary.default.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote'
+      ];
+      console.log('Using remote @sparticuz/chromium for Vercel deployment');
+    } catch (error) {
+      console.log('Failed to load @sparticuz/chromium, using default Chromium:', error);
+      // 如果 @sparticuz/chromium 加载失败，使用默认配置
+      launchOptions.args.push('--single-process', '--no-zygote');
+    }
   }
 
   return await chromium.launch(launchOptions);

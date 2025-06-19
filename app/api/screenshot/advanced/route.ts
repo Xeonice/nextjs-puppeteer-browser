@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
-import chromiumBinary from '@sparticuz/chromium';
 
 // 更多的User-Agent轮换
 const USER_AGENTS = [
@@ -270,8 +269,24 @@ export async function POST(request: NextRequest) {
 
     // 在生产环境使用 Vercel 兼容的 Chromium
     if (isProduction) {
-      launchOptions.executablePath = await chromiumBinary.executablePath();
-      launchOptions.args = chromiumBinary.args;
+      try {
+        const chromiumBinary = await import('@sparticuz/chromium');
+        // 使用远程 Chromium 二进制文件
+        const remoteChromiumUrl = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar';
+        launchOptions.executablePath = await chromiumBinary.default.executablePath(remoteChromiumUrl);
+        launchOptions.args = [
+          ...chromiumBinary.default.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--single-process',
+          '--no-zygote'
+        ];
+        console.log('Using remote @sparticuz/chromium for Vercel deployment');
+      } catch (error) {
+        console.log('Failed to load @sparticuz/chromium, using default Chromium');
+        // 如果 @sparticuz/chromium 加载失败，使用默认配置
+        launchOptions.args.push('--single-process', '--no-zygote');
+      }
     }
 
     // 启动浏览器，使用更多反检测参数
