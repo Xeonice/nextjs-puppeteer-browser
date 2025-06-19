@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium } from 'playwright';
+import chromiumBinary from '@sparticuz/chromium';
 
 // 常见的User-Agent列表
 const USER_AGENTS = [
@@ -91,8 +92,9 @@ export async function POST(request: NextRequest) {
     // 获取网站特定配置
     const siteConfig = getSiteConfig(url);
 
-    // 启动浏览器
-    const browser = await chromium.launch({
+    // 检测环境并配置 Chromium
+    const isProduction = process.env.VERCEL_ENV === 'production';
+    const launchOptions: any = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -108,7 +110,16 @@ export async function POST(request: NextRequest) {
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding'
       ]
-    });
+    };
+
+    // 在生产环境使用 Vercel 兼容的 Chromium
+    if (isProduction) {
+      launchOptions.executablePath = await chromiumBinary.executablePath();
+      launchOptions.args = chromiumBinary.args;
+    }
+
+    // 启动浏览器
+    const browser = await chromium.launch(launchOptions);
 
     const context = await browser.newContext({
       viewport: { width, height },

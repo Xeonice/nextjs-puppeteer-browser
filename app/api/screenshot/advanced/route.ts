@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import chromiumBinary from '@sparticuz/chromium';
 
 // 更多的User-Agent轮换
 const USER_AGENTS = [
@@ -238,8 +239,9 @@ export async function POST(request: NextRequest) {
     const siteConfig = getSiteConfig(url);
     const userAgent = getRandomUserAgent();
 
-    // 启动浏览器，使用更多反检测参数
-    browser = await chromium.launch({
+    // 检测环境并配置 Chromium
+    const isProduction = process.env.VERCEL_ENV === 'production';
+    const launchOptions: any = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -264,7 +266,16 @@ export async function POST(request: NextRequest) {
         '--no-report-upload',
         '--disable-breakpad'
       ]
-    });
+    };
+
+    // 在生产环境使用 Vercel 兼容的 Chromium
+    if (isProduction) {
+      launchOptions.executablePath = await chromiumBinary.executablePath();
+      launchOptions.args = chromiumBinary.args;
+    }
+
+    // 启动浏览器，使用更多反检测参数
+    browser = await chromium.launch(launchOptions);
 
     const context = await browser.newContext({
       viewport: { 

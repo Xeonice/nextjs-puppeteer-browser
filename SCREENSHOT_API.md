@@ -266,6 +266,8 @@ curl -X POST http://localhost:3000/api/screenshot/advanced \
 
 ## 部署和启动
 
+### 本地开发
+
 1. 安装依赖:
 ```bash
 npm install
@@ -285,6 +287,49 @@ npm run dev
 ```
 http://localhost:3000/screenshot
 ```
+
+### Vercel 部署
+
+项目已针对 Vercel 部署进行全面优化：
+
+#### 特性
+- **自动配置**: 包含 `vercel.json` 和 `next.config.ts` 配置文件
+- **Chromium 兼容**: 使用 `@sparticuz/chromium` 提供 Vercel 兼容的浏览器二进制文件
+- **函数优化**: API 路由配置了 60 秒超时限制
+- **无需浏览器安装**: 生产环境自动使用兼容的 Chromium 版本
+
+#### 部署步骤
+1. **GitHub 集成** (推荐):
+   - 将代码推送到 GitHub
+   - 在 Vercel 控制台连接 GitHub 仓库
+   - 自动部署和 CI/CD
+
+2. **CLI 部署**:
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+3. **环境变量** (可选):
+   - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` (已在 vercel.json 中配置)
+
+#### Vercel 配置说明
+```json
+{
+  "functions": {
+    "app/api/screenshot/route.ts": { "maxDuration": 60 },
+    "app/api/screenshot/advanced/route.ts": { "maxDuration": 60 }
+  },
+  "env": {
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+  }
+}
+```
+
+#### 注意事项
+- 免费版 Vercel 函数执行时间限制为 10 秒
+- Pro 版支持 60 秒超时，推荐用于生产环境
+- 首次冷启动可能需要额外时间加载 Chromium
 
 ## 技术栈
 

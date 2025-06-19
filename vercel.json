@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/screenshot/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/screenshot/advanced/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+  }
+} 
