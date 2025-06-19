@@ -35,6 +35,17 @@ const TEST_CASES = [
     }
   },
   {
+    name: '基础截图 - Example.com (快速模式)',
+    endpoint: '/api/screenshot',
+    data: {
+      url: 'https://example.com',
+      width: 800,
+      height: 600,
+      quality: 80,
+      fastMode: true
+    }
+  },
+  {
     name: '高级截图 - GitHub',
     endpoint: '/api/screenshot/advanced',
     data: {
@@ -47,6 +58,19 @@ const TEST_CASES = [
     }
   },
   {
+    name: '高级截图 - GitHub (快速模式)',
+    endpoint: '/api/screenshot/advanced',
+    data: {
+      url: 'https://github.com',
+      width: 1200,
+      height: 800,
+      fullPage: false,
+      quality: 85,
+      blockResources: ['font', 'media'],
+      fastMode: true
+    }
+  },
+  {
     name: '百度截图测试',
     endpoint: '/api/screenshot/advanced',
     data: {
@@ -55,6 +79,18 @@ const TEST_CASES = [
       height: 768,
       fullPage: true,
       quality: 90
+    }
+  },
+  {
+    name: '百度截图测试 (快速模式)',
+    endpoint: '/api/screenshot/advanced',
+    data: {
+      url: 'https://www.baidu.com',
+      width: 1024,
+      height: 768,
+      fullPage: true,
+      quality: 90,
+      fastMode: true
     }
   }
 ];

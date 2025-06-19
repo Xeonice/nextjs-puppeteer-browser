@@ -82,14 +82,24 @@ function getSiteConfig(url: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, width = 1920, height = 1080, fullPage = false, quality = 80 } = await request.json();
+    const { url, width = 1920, height = 1080, fullPage = false, quality = 80, fastMode = false } = await request.json();
 
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      const errorResponse = NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+      return errorResponse;
     }
 
     // 获取网站特定配置
-    const siteConfig = getSiteConfig(url);
+    let siteConfig = getSiteConfig(url);
+
+    // 快速模式：大幅减少等待时间
+    if (fastMode) {
+      siteConfig = {
+        ...siteConfig,
+        waitTime: Math.min(siteConfig.waitTime / 3, 800) // 等待时间减少到1/3，最少0.8秒
+      };
+    }
 
     // 检测环境并配置 Chromium
     const isProduction = process.env.VERCEL_ENV === 'production';
@@ -266,7 +276,7 @@ export async function POST(request: NextRequest) {
     // 返回base64编码的图片
     const base64Screenshot = screenshot.toString('base64');
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       screenshot: `data:image/jpeg;base64,${base64Screenshot}`,
       metadata: {
@@ -278,15 +288,25 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // 设置正确的字符编码头
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+    
+    return response;
+
   } catch (error) {
     console.error('Screenshot error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { 
         error: 'Failed to capture screenshot', 
         details: error instanceof Error ? error.message : String(error)
       }, 
       { status: 500 }
     );
+    
+    // 设置正确的字符编码头
+    errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+    
+    return errorResponse;
   }
 }
 
@@ -295,7 +315,9 @@ export async function GET(request: NextRequest) {
   const url = searchParams.get('url');
 
   if (!url) {
-    return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+    const errorResponse = NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+    errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+    return errorResponse;
   }
 
   try {
@@ -312,12 +334,17 @@ export async function GET(request: NextRequest) {
     return await POST(mockRequest);
   } catch (error) {
     console.error('Screenshot error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { 
         error: 'Failed to capture screenshot', 
         details: error instanceof Error ? error.message : String(error)
       }, 
       { status: 500 }
     );
+    
+    // 设置正确的字符编码头
+    errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+    
+    return errorResponse;
   }
 } 

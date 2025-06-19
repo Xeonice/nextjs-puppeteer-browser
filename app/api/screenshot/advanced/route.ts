@@ -228,15 +228,28 @@ export async function POST(request: NextRequest) {
       quality = 80,
       waitForSelector,
       blockResources = [],
-      customHeaders = {}
+      customHeaders = {},
+      fastMode = false // 新增快速模式参数
     } = await request.json();
 
     if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+      const errorResponse = NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+    return errorResponse;
     }
 
-    const siteConfig = getSiteConfig(url);
+    let siteConfig = getSiteConfig(url);
     const userAgent = getRandomUserAgent();
+
+    // 快速模式：减少所有等待时间
+    if (fastMode) {
+      siteConfig = {
+        ...siteConfig,
+        waitTime: Math.min(siteConfig.waitTime / 2, 1000), // 等待时间减半，最少1秒
+        scrollDelay: Math.min(siteConfig.scrollDelay / 2, 500), // 滚动延迟减半，最少0.5秒
+        retryAttempts: 1 // 快速模式只尝试一次
+      };
+    }
 
     // 检测环境并配置 Chromium
     const isProduction = process.env.VERCEL_ENV === 'production';
@@ -440,7 +453,7 @@ export async function POST(request: NextRequest) {
     // 返回结果
     const base64Screenshot = screenshot.toString('base64');
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       screenshot: `data:image/jpeg;base64,${base64Screenshot}`,
       metadata: {
@@ -454,6 +467,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // 设置正确的字符编码头
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+    
+    return response;
+
   } catch (error) {
     console.error('Advanced screenshot error:', error);
     
@@ -465,12 +483,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { 
         error: 'Failed to capture screenshot', 
         details: error instanceof Error ? error.message : String(error)
       }, 
       { status: 500 }
     );
+    
+    // 设置正确的字符编码头
+    errorResponse.headers.set('Content-Type', 'application/json; charset=utf-8');
+    
+    return errorResponse;
   }
 } 
