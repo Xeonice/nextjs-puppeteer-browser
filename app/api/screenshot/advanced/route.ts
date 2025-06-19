@@ -11,12 +11,12 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
 ];
 
-// 网站特定的反爬虫配置
+// 网站特定的反爬虫配置 - 优化版本，减少等待时间
 const ANTI_DETECTION_CONFIGS = {
   'baidu.com': {
-    waitTime: 5000,
-    scrollDelay: 2000,
-    retryAttempts: 3,
+    waitTime: 2500, // 从5秒减少到2.5秒
+    scrollDelay: 1000, // 从2秒减少到1秒
+    retryAttempts: 2, // 从3次减少到2次
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -30,9 +30,9 @@ const ANTI_DETECTION_CONFIGS = {
     }
   },
   'zhihu.com': {
-    waitTime: 6000,
-    scrollDelay: 3000,
-    retryAttempts: 5,
+    waitTime: 3000, // 从6秒减少到3秒
+    scrollDelay: 1500, // 从3秒减少到1.5秒
+    retryAttempts: 3, // 从5次减少到3次
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -48,9 +48,9 @@ const ANTI_DETECTION_CONFIGS = {
     }
   },
   'toutiao.com': {
-    waitTime: 7000,
-    scrollDelay: 3500,
-    retryAttempts: 4,
+    waitTime: 3500, // 从7秒减少到3.5秒
+    scrollDelay: 2000, // 从3.5秒减少到2秒
+    retryAttempts: 3, // 从4次减少到3次
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -69,9 +69,9 @@ const ANTI_DETECTION_CONFIGS = {
     }
   },
   'taobao.com': {
-    waitTime: 4000,
-    scrollDelay: 2500,
-    retryAttempts: 4,
+    waitTime: 2000, // 从4秒减少到2秒
+    scrollDelay: 1500, // 从2.5秒减少到1.5秒
+    retryAttempts: 2, // 从4次减少到2次
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -79,8 +79,8 @@ const ANTI_DETECTION_CONFIGS = {
     }
   },
   'default': {
-    waitTime: 2000,
-    scrollDelay: 1000,
+    waitTime: 1500, // 从2秒减少到1.5秒
+    scrollDelay: 800, // 从1秒减少到0.8秒
     retryAttempts: 2,
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -278,8 +278,25 @@ export async function POST(request: NextRequest) {
           ...chromiumBinary.default.args,
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--single-process',
-          '--no-zygote'
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-blink-features=AutomationControlled',
+          '--disable-ipc-flooding-protection',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-extensions',
+          '--disable-sync',
+          '--metrics-recording-only',
+          '--no-report-upload',
+          '--disable-breakpad'
         ];
         console.log('Using remote @sparticuz/chromium for Vercel deployment');
       } catch (error) {

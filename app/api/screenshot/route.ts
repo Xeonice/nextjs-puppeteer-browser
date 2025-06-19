@@ -9,10 +9,10 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15'
 ];
 
-// 针对特定网站的配置
+// 针对特定网站的配置 - 优化版本，减少等待时间
 const SITE_CONFIGS = {
   'baidu.com': {
-    waitTime: 3000,
+    waitTime: 2000, // 从3秒减少到2秒
     userAgent: USER_AGENTS[0],
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -24,7 +24,7 @@ const SITE_CONFIGS = {
     }
   },
   'zhihu.com': {
-    waitTime: 4000,
+    waitTime: 2500, // 从4秒减少到2.5秒
     userAgent: USER_AGENTS[0],
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -38,7 +38,7 @@ const SITE_CONFIGS = {
     }
   },
   'toutiao.com': {
-    waitTime: 5000,
+    waitTime: 3000, // 从5秒减少到3秒
     userAgent: USER_AGENTS[0],
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -57,7 +57,7 @@ const SITE_CONFIGS = {
     }
   },
   'default': {
-    waitTime: 2000,
+    waitTime: 1500, // 从2秒减少到1.5秒
     userAgent: USER_AGENTS[0],
     headers: {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -122,8 +122,25 @@ export async function POST(request: NextRequest) {
           ...chromiumBinary.default.args,
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--single-process',
-          '--no-zygote'
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-blink-features=AutomationControlled',
+          '--disable-ipc-flooding-protection',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-extensions',
+          '--disable-sync',
+          '--metrics-recording-only',
+          '--no-report-upload',
+          '--disable-breakpad'
         ];
         console.log('Using remote @sparticuz/chromium for Vercel deployment');
       } catch (error) {
