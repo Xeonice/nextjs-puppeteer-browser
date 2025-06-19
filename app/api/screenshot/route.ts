@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium } from 'playwright';
+import { put } from '@vercel/blob';
 
 // 常见的User-Agent列表
 const USER_AGENTS = [
@@ -273,25 +274,61 @@ export async function POST(request: NextRequest) {
 
     await browser.close();
 
-    // 返回base64编码的图片
-    const base64Screenshot = screenshot.toString('base64');
+    // 上传到 Vercel Blob 存储
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const domain = new URL(url).hostname.replace(/\./g, '-');
+    const filename = `screenshot-${domain}-${timestamp}.jpeg`;
 
-    const response = NextResponse.json({
-      success: true,
-      screenshot: `data:image/jpeg;base64,${base64Screenshot}`,
-      metadata: {
-        url,
-        timestamp: new Date().toISOString(),
-        dimensions: { width, height },
-        fullPage,
-        quality
-      }
-    });
+    try {
+      const blob = await put(filename, screenshot, {
+        access: 'public',
+        addRandomSuffix: true,
+        contentType: 'image/jpeg'
+      });
 
-    // 设置正确的字符编码头
-    response.headers.set('Content-Type', 'application/json; charset=utf-8');
-    
-    return response;
+      const response = NextResponse.json({
+        success: true,
+        url: blob.url,
+        downloadUrl: blob.downloadUrl,
+        metadata: {
+          originalUrl: url,
+          timestamp: new Date().toISOString(),
+          dimensions: { width, height },
+          fullPage,
+          quality,
+          filename: blob.pathname,
+          storage: 'vercel-blob'
+        }
+      });
+
+      // 设置正确的字符编码头
+      response.headers.set('Content-Type', 'application/json; charset=utf-8');
+      
+      return response;
+
+    } catch (blobError) {
+      console.error('Blob upload error:', blobError);
+      
+      // 如果 Blob 上传失败，回退到 base64
+      const base64Screenshot = screenshot.toString('base64');
+      
+      const response = NextResponse.json({
+        success: true,
+        screenshot: `data:image/jpeg;base64,${base64Screenshot}`,
+        metadata: {
+          url,
+          timestamp: new Date().toISOString(),
+          dimensions: { width, height },
+          fullPage,
+          quality,
+          storage: 'base64-fallback',
+          blobError: blobError instanceof Error ? blobError.message : String(blobError)
+        }
+      });
+
+      response.headers.set('Content-Type', 'application/json; charset=utf-8');
+      return response;
+    }
 
   } catch (error) {
     console.error('Screenshot error:', error);

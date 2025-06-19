@@ -1,6 +1,6 @@
 # 网页截图 API 文档
 
-这是一个基于 Playwright 的网页截图 API，专门优化了对百度、知乎等反爬虫强的网站的支持。
+这是一个基于 Playwright 的网页截图 API，专门优化了对百度、知乎等反爬虫强的网站的支持。现在支持 Vercel Blob 存储，截图直接保存到云端。
 
 ## 功能特点
 
@@ -8,7 +8,9 @@
 - 支持完整页面截图和视口截图
 - 可自定义图片质量和尺寸
 - 支持 GET 和 POST 请求
-- 返回 Base64 编码的图片
+- **🆕 Vercel Blob 存储**：截图直接保存到云端，返回访问 URL
+- **🆕 快速模式**：支持 `fastMode` 参数，大幅减少等待时间
+- 支持 Base64 回退机制（当 Blob 存储不可用时）
 
 ### 反爬虫特性
 - 🛡️ **多层反检测机制**：覆盖 webdriver、plugins、chrome 对象等检测点
@@ -50,8 +52,29 @@ curl "http://localhost:3000/api/screenshot?url=https://www.baidu.com&width=1920&
 | height | number | 1080 | 视口高度 |
 | fullPage | boolean | false | 是否截取完整页面 |
 | quality | number | 80 | 图片质量 (10-100) |
+| fastMode | boolean | false | **🆕** 快速模式，减少等待时间 |
 
 #### 响应格式
+
+**使用 Vercel Blob 存储时**：
+```json
+{
+  "success": true,
+  "url": "https://abc123.public.blob.vercel-storage.com/screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+  "downloadUrl": "https://abc123.public.blob.vercel-storage.com/screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+  "metadata": {
+    "originalUrl": "https://www.baidu.com",
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "dimensions": { "width": 1920, "height": 1080 },
+    "fullPage": false,
+    "quality": 80,
+    "filename": "screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+    "storage": "vercel-blob"
+  }
+}
+```
+
+**回退到 Base64 时**：
 ```json
 {
   "success": true,
@@ -61,7 +84,9 @@ curl "http://localhost:3000/api/screenshot?url=https://www.baidu.com&width=1920&
     "timestamp": "2024-01-01T00:00:00.000Z",
     "dimensions": { "width": 1920, "height": 1080 },
     "fullPage": false,
-    "quality": 80
+    "quality": 80,
+    "storage": "base64-fallback",
+    "blobError": "Error message if blob upload failed"
   }
 }
 ```
@@ -133,9 +158,65 @@ curl -X POST http://localhost:3000/api/screenshot/advanced \
 - **滚动延迟**: 3.5秒
 
 ### 淘宝 (taobao.com)
-- **等待时间**: 4秒
-- **重试次数**: 4次
-- **滚动延迟**: 2.5秒
+- **等待时间**: 2秒（优化后）
+- **重试次数**: 2次（优化后）
+- **滚动延迟**: 1.5秒（优化后）
+
+## Blob 存储管理
+
+### 3. 列出截图文件
+
+**端点**: `/api/blob/list`
+
+#### GET 请求
+```bash
+curl "http://localhost:3000/api/blob/list?limit=10&prefix=screenshot"
+```
+
+#### 请求参数
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| limit | number | 10 | 返回文件数量限制 |
+| prefix | string | screenshot | 文件名前缀过滤 |
+
+#### 响应格式
+```json
+{
+  "success": true,
+  "blobs": [
+    {
+      "url": "https://abc123.public.blob.vercel-storage.com/screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+      "downloadUrl": "https://abc123.public.blob.vercel-storage.com/screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+      "pathname": "screenshot-baidu-com-2024-01-01T00-00-00-000Z-xyz789.jpeg",
+      "uploadedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### 4. 删除截图文件
+
+**端点**: `/api/blob/list`
+
+#### DELETE 请求
+```bash
+curl -X DELETE "http://localhost:3000/api/blob/list?url=https://abc123.public.blob.vercel-storage.com/screenshot-xyz789.jpeg"
+```
+
+#### 请求参数
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| url | string | 要删除的文件 URL |
+
+#### 响应格式
+```json
+{
+  "success": true,
+  "message": "Blob deleted successfully",
+  "deletedUrl": "https://abc123.public.blob.vercel-storage.com/screenshot-xyz789.jpeg"
+}
+```
 
 ## 使用示例
 

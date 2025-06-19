@@ -51,7 +51,7 @@ export default function ScreenshotPage() {
         throw new Error(data.error || '截图失败');
       }
 
-      setScreenshot(data.screenshot);
+      setScreenshot(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : '截图失败');
     } finally {
@@ -203,9 +203,12 @@ export default function ScreenshotPage() {
             <div className="border border-gray-300 rounded-lg overflow-hidden">
               <img
                 src={screenshot}
-                alt="Website Screenshot"
+                alt={`Screenshot of ${url}`}
                 className="w-full h-auto"
               />
+            </div>
+            <div className="mt-3 text-sm text-gray-600">
+              <p>截图网址: {url}</p>
             </div>
           </div>
         )}
