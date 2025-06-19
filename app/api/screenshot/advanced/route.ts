@@ -396,6 +396,15 @@ export async function POST(request: NextRequest) {
         // 等待页面加载
         await page.waitForTimeout(siteConfig.waitTime);
 
+        await page.addStyleTag({
+          content: `
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+            * {
+              font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            }
+          `
+        });
+
         // 如果指定了选择器，等待该元素出现
         if (waitForSelector) {
           await page.waitForSelector(waitForSelector, { timeout: 10000 });

@@ -240,6 +240,15 @@ export async function POST(request: NextRequest) {
     // 等待页面加载完成
     await page.waitForTimeout(siteConfig.waitTime);
 
+    await page.addStyleTag({
+      content: `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+        * {
+          font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+      `
+    });
+
     // 滚动页面以触发懒加载
     if (fullPage) {
       await page.evaluate(() => {
